@@ -56,8 +56,11 @@
       const requestData = async function () {
 
         const sf = await d3.json("./SF-Neighborhoods.geo.json");
+        // const sf2 = await d3.csv("./2020_CensusTracts_SF.csv");
         console.log(sf);
+        // console.log(sf2);
 
+        // var testcensusTracts = topojson.feature(sf2)
         // We find that the feature we want to visualize is the SFNeighborhoods property within objects
         //  Always search .objects for different features to show in a topoJSON dataset
         var neighborhoods = topojson.feature(sf, sf.objects.SFNeighborhoods);
