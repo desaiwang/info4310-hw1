@@ -1,21 +1,21 @@
 <html>
 
 <head>
-  <title>INFO 3300 - March 9</title>
+  <title>INFO 4310 - HW1</title>
 
   <link href="https://fonts.googleapis.com/css?family=Lato:400,700|Raleway:400,700" rel="stylesheet">
 
-  <link rel="stylesheet" type="text/css" href="../css/normalize.css">
-  <link rel="stylesheet" type="text/css" href="../css/skeleton.css">
-  <link rel="stylesheet" type="text/css" href="../css/custom-style.css">
-
-  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.14.2/styles/default.min.css">
-  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.14.2/highlight.min.js"></script>
   <script src="https://d3js.org/d3.v5.min.js"></script>
   <script src="https://d3js.org/topojson.v2.min.js"></script>
-  <style>
+  <!-- <style>
     .neighborhood {
       fill: #EEE;
+      stroke: white;
+      stroke-width: 2px;
+    }
+  </style> -->
+  <style>
+    .neighborhood {
       stroke: white;
       stroke-width: 2px;
     }
@@ -24,126 +24,136 @@
 </head>
 
 <body>
-  <div class="container larger">
+  <div class="income map">
     <p> A map of SF trees:</p>
-    <svg id="points" height="900" width="900" style="background: #fff; margin-top:50px">
-
+    <svg id="income" height="500" width="500" style="background: #fff; margin-top:50px">
     </svg>
-
-
-
-    <script id="notes1">
-
-      const svg = d3.select("#points");
-      const width = svg.attr("width");
-      const height = svg.attr("height");
-      const margin = { top: 20, right: 20, bottom: 20, left: 20 };
-      const mapWidth = width - margin.left - margin.right;
-      const mapHeight = height - margin.top - margin.bottom;
-      const map = svg.append("g")
-        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-
-      // Let's make a map of all of the municipal trees in San Francisco
-      // With any luck, we ought to be able to visualize the streets/blocks in the city, since trees line them
-      //   (this is really just an excuse to make a lot of dots)
-
-      // Datasets for today:
-      //  "../datasets/SF-Neighborhoods.json"
-      //  "../datasets/Street_Tree_List_smaller.csv"
-
-
-      // map geojson
-      const requestData = async function () {
-
-        const sf = await d3.json("./SF-Neighborhoods.geo.json");
-        // const sf2 = await d3.csv("./2020_CensusTracts_SF.csv");
-        console.log(sf);
-        // console.log(sf2);
-
-        // var testcensusTracts = topojson.feature(sf2)
-        // We find that the feature we want to visualize is the SFNeighborhoods property within objects
-        //  Always search .objects for different features to show in a topoJSON dataset
-        var neighborhoods = topojson.feature(sf, sf.objects.SFNeighborhoods);
-
-        // We use Mercator projection instead of a "better" projection because it's more familiar
-        // It also leads to a flat line on the bottom of the city due to how the projection makes all
-        //  latitude lines flat (which allows rhumb line equivalency)
-        var projection = d3.geoMercator().fitSize([mapWidth, mapHeight], neighborhoods);
-        var path = d3.geoPath().projection(projection);
-
-        // Draw neighborhoods
-        // Just as in our line generators, the scale is used by the generator to take complex data and
-        //  generate fancy paths
-        map.selectAll("path.neighborhood").data(neighborhoods.features)
-          .join("path")
-          .attr("class", "neighborhood")
-          .attr("d", path);
-
-
-        const trees = await d3.csv("./Street_Tree_List-2022-01-30_FILTERED.csv", d3.autoType);
-        console.log(trees);
-
-        // We need to figure out where to position the dots. Since we may have a lot of them, let's process
-        //  the data ahead of time and add to our dict
-        // (Main reason for doing this is that otherwise we would have to call projection() twice, once
-        //    for 'cx' and once for 'cy')
-
-        const timeParser = d3.timeParse("%m/%d/%y %H:%M")
-        const today = timeParser("1/31/24 0:00")
-        // console.log(today);
-        // console.log(d3.utcYear.offset(today, -100));
-        // console.log(today > d3.utcYear.offset(today, 100))
-        trees.forEach(d => {
-
-          // Use the projection just like a scale to convert from lng/lat to pixels
-          d.Position = projection([d.Longitude, d.Latitude]);
-
-          //parse time, and adjust if parsed year wrong (eg. 1960 as 2060)
-          time = timeParser(d['PlantDate']);
-          if (time > today) {
-            time = d3.utcYear.offset(time, -100)
-          };
-          d['PlantDate'] = time;
-
-        });
-
-        const diameterExtent = d3.extent(trees, d => d['DBH']);
-        const diameterScale = d3.scaleLinear().domain(diameterExtent).range([1, 10]);
-        console.log(diameterScale());
-
-        const dateExtent = d3.extent(trees, d => d['PlantDate']);
-        console.log(dateExtent);
-        const dateScale = d3.scaleLinear().domain(dateExtent).range([1, 0]);
-
-        // Draw circles using the Positions we just made
-        map.selectAll("circle").data(trees)
-          .join("circle")
-          .attr("r", d => diameterScale(d['DBH']))
-          .attr("fill", d => d3.interpolateGreens(dateScale(d["PlantDate"])))
-          .attr("opacity", 0.5)
-          .attr("cx", d => d.Position[0])
-          .attr("cy", d => d.Position[1]);
-
-
-
-      }
-      requestData();
-
-
-
-
-
-
-
-    </script>
-
-
-
-
-
-
-
+    <svg id="treeCount" height="500" width="500" style="background: #fff; margin-top:50px">
+    </svg>
   </div>
+
+
+  <script id="notes1">
+
+    const svg = d3.select("#income");
+    const width = svg.attr("width");
+    const height = svg.attr("height");
+    const margin = { top: 20, right: 20, bottom: 20, left: 20 };
+    const mapWidth = width - margin.left - margin.right;
+    const mapHeight = height - margin.top - margin.bottom;
+    const map = svg.append("g")
+      .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+    // Let's make a map of all of the municipal trees in San Francisco
+    // With any luck, we ought to be able to visualize the streets/blocks in the city, since trees line them
+    //   (this is really just an excuse to make a lot of dots)
+
+    // Datasets for today:
+    //  "../datasets/SF-Neighborhoods.json"
+    //  "../datasets/Street_Tree_List_smaller.csv"
+
+
+    // map geojson
+    const requestData = async function () {
+
+      const sf = await d3.json("./SF-Neighborhoods.geo.json");
+      const sf2 = await d3.json("./tree_by_census_tracts.geojson");
+      console.log(sf);
+      console.log(sf2);
+
+
+      // var testcensusTracts = topojson.feature(sf2)
+      // We find that the feature we want to visualize is the SFNeighborhoods property within objects
+      //  Always search .objects for different features to show in a topoJSON dataset
+      var neighborhoods = topojson.feature(sf, sf.objects.SFNeighborhoods);
+      // console.log(neighborhoods)
+      neighborhoods = sf2;
+      console.log(neighborhoods.features)
+
+      // var neighborhoods2 = topojson.feature(sf2, sf2.features);
+      // console.log(neighborhoods2)
+
+      // We use Mercator projection instead of a "better" projection because it's more familiar
+      // It also leads to a flat line on the bottom of the city due to how the projection makes all
+      //  latitude lines flat (which allows rhumb line equivalency)
+      var projection = d3.geoMercator().fitSize([mapWidth, mapHeight], neighborhoods);
+      var path = d3.geoPath().projection(projection);
+
+      // neighborhoods.features.forEach(d => {
+      //   console.log(d.properties["TreeCount"]);
+      // })
+
+      const incomeExtent = d3.extent(neighborhoods.features, d => d.properties["est household mean income"]);
+      const incomeScale = d3.scaleLinear().domain(incomeExtent).range([0, 1]);
+
+      const treeCountExtent = d3.extent(neighborhoods.features, d => d.properties["TreeCount"]);
+      const treeCountScale = d3.scaleLinear().domain(treeCountExtent).range([0, 1]);
+      // Draw neighborhoods
+      // Just as in our line generators, the scale is used by the generator to take complex data and
+      //  generate fancy paths
+      map.selectAll("path.neighborhood").data(neighborhoods.features)
+        .join("path")
+        .attr("class", "neighborhood")
+        .attr("d", path)
+        .attr("fill", d => d3.interpolateGreens(incomeScale(d.properties["est household mean income"])));
+
+
+      const trees = await d3.csv("./Street_Tree_List-2022-01-30_FILTERED.csv", d3.autoType);
+      console.log(trees);
+
+      // We need to figure out where to position the dots. Since we may have a lot of them, let's process
+      //  the data ahead of time and add to our dict
+      // (Main reason for doing this is that otherwise we would have to call projection() twice, once
+      //    for 'cx' and once for 'cy')
+
+      const timeParser = d3.timeParse("%m/%d/%y %H:%M")
+      const today = timeParser("1/31/24 0:00")
+      // console.log(today);
+      // console.log(d3.utcYear.offset(today, -100));
+      // console.log(today > d3.utcYear.offset(today, 100))
+      trees.forEach(d => {
+
+        // Use the projection just like a scale to convert from lng/lat to pixels
+        d.Position = projection([d.Longitude, d.Latitude]);
+
+        //parse time, and adjust if parsed year wrong (eg. 1960 as 2060)
+        time = timeParser(d['PlantDate']);
+        if (time > today) {
+          time = d3.utcYear.offset(time, -100)
+        };
+        d['PlantDate'] = time;
+
+      });
+
+      const diameterExtent = d3.extent(trees, d => d['DBH']);
+      const diameterScale = d3.scaleLinear().domain(diameterExtent).range([1, 10]);
+      console.log(diameterScale());
+
+      const dateExtent = d3.extent(trees, d => d['PlantDate']);
+      console.log(dateExtent);
+      const dateScale = d3.scaleLinear().domain(dateExtent).range([1, 0]);
+
+      // Draw circles using the Positions we just made
+      // map.selectAll("circle").data(trees)
+      //   .join("circle")
+      //   .attr("r", d => diameterScale(d['DBH']))
+      //   .attr("fill", d => d3.interpolateGreens(dateScale(d["PlantDate"])))
+      //   .attr("opacity", 0.5)
+      //   .attr("cx", d => d.Position[0])
+      //   .attr("cy", d => d.Position[1]);
+
+
+
+    }
+    requestData();
+
+
+
+
+
+
+
+  </script>
 </body>
 
 </html>
