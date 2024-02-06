@@ -16,4 +16,4 @@ app.wsgi_app = WhiteNoise(app.wsgi_app, root="static/",
 
 # have flask start server if calling from terminal
 if __name__ == "__main__":
-    app.run(threaded=True, port=5000)
+    app.run(threaded=True, port=4000)

@@ -52,7 +52,7 @@
       Tracts </h3>
     <div class="row 1">
       <div class="column" id="income" style="margin:30px">
-        <p style="margin-top: -2px; text-align: center">Mean Household Income ($)</p>
+        <p style="margin-top: -2px; text-align: center">Mean Household Income</p>
         <svg id="mapIncome" height="600" width="600" style="background: #fff"></svg>
         <svg id="legendIncome" height="50" width="600" style="margin-top:10px;"></svg>
       </div>
@@ -172,49 +172,13 @@
         .domain(treeCountExtent)
         .range(d3.schemeGreens[6]);
 
-      const incomeScale = d3.scaleLinear().domain(incomeExtent).range([0, mapScatterWidth]);
-      const treeCountScale = d3.scaleLinear().domain(treeCountExtent).range([mapScatterHeight, 0]);
-
-      // make axes and grids
-      let leftAxis = d3.axisLeft(treeCountScale);
-      let leftGridLines = d3.axisLeft(treeCountScale).tickSize(-mapScatterWidth - 10).tickFormat("");
-      let bottomAxis = d3.axisBottom(incomeScale).tickFormat(d3.format("$.0s"));
-      let bottomGridLines = d3.axisBottom(incomeScale).tickSize(-mapScatterHeight - 10).tickFormat("");
-
-      annotations.append("g").attr("class", "y axis")
-        .attr("transform", `translate(${marginScatter.left - 10}, ${marginScatter.top})`)
-        .call(leftAxis);
-      annotations.append("g").attr("class", "y gridlines")
-        .attr("transform", `translate(${marginScatter.left - 10}, ${marginScatter.top})`)
-        .call(leftGridLines);
-      annotations.append("g").attr("class", "x axis")
-        .attr("transform", `translate(${marginScatter.left}, ${mapScatterHeight + marginScatter.top + 10})`)
-        .call(bottomAxis);
-      annotations.append("g").attr("class", "x gridlines")
-        .attr("transform", `translate(${marginScatter.left}, ${mapScatterHeight + marginScatter.top + 10})`)
-        .call(bottomGridLines);
-
-      let circles = mapScatter.selectAll("circle.scatter").data(tracts.features)
-        .join("circle")
-        .attr("class", "scatter")
-        .attr("cx", d => {
-          console.log(d.properties["est household mean income"], incomeScale(d.properties["est household mean income"]))
-          return incomeScale(d.properties["est household mean income"])
-        }
-        )
-        .attr("cy", d => treeCountScale(d.properties["TreeCount"]))
-        .attr("r", 3)
-        .attr("opacity", 0.6)
-        .attr("fill", "#AAA");
-
-
       // census tracts for income map
       mapIncome.selectAll("path.tractsIncome").data(tracts.features)
         .join("path")
         .attr("class", "tractsIncome")
         .attr("d", path)
         .attr("fill", d => incomeColorScale(d.properties["est household mean income"]));
-      drawLegend("#legendIncome", incomeColorScale);
+      drawLegend("#legendIncome", incomeColorScale, d3.format("$.2s"));
 
       // census tracts for tree count map
       mapTreeCount.selectAll("path.tractsTreeCount").data(tracts.features)
@@ -222,7 +186,7 @@
         .attr("class", "tractsTreeCount")
         .attr("d", path)
         .attr("fill", d => treeCountColorScale(d.properties["TreeCount"]));
-      drawLegend("#legendTreeCount", treeCountColorScale);
+      drawLegend("#legendTreeCount", treeCountColorScale, d3.format(".2s"));
 
 
       // const trees = await d3.csv("./Street_Tree_List-2022-01-30_FILTERED.csv", d3.autoType);
@@ -337,11 +301,11 @@
       //annotations of areas on map key
       d3.select("#highincome_income")
         .append("text")
-        .text(`mean household income: ${highincomeAvgIncome}`);
+        .text(`mean household income: ${d3.format("$,")(highincomeAvgIncome)}`);
 
       d3.select("#highincome_trees")
         .append("text")
-        .text(`num trees: ${highincomeTreeCount}`);
+        .text(`number of trees: ${highincomeTreeCount}`);
 
       //tracts of low incomes
       const tractlowincome = await d3.json("./tract_lowincome.geojson");
@@ -389,14 +353,46 @@
       //annotations of areas on map key
       d3.select("#lowincome_income")
         .append("text")
-        .text(`mean household income: ${lowincomeAvgIncome}`);
+        .text(`mean household income: ${d3.format("$,")(lowincomeAvgIncome)}`);
 
       d3.select("#lowincome_trees")
         .append("text")
-        .text(`num trees: ${lowincomeTreeCount}`);
+        .text(`number of trees: ${lowincomeTreeCount}`);
 
       //scatterplot
+      const incomeScale = d3.scaleLinear().domain(incomeExtent).range([0, mapScatterWidth]);
+      const treeCountScale = d3.scaleLinear().domain(treeCountExtent).range([mapScatterHeight, 0]);
 
+      // make axes and grids
+      let leftAxis = d3.axisLeft(treeCountScale);
+      let leftGridLines = d3.axisLeft(treeCountScale).tickSize(-mapScatterWidth - 10).tickFormat("");
+      let bottomAxis = d3.axisBottom(incomeScale).tickFormat(d3.format("$.0s"));
+      let bottomGridLines = d3.axisBottom(incomeScale).tickSize(-mapScatterHeight - 10).tickFormat("");
+
+      annotations.append("g").attr("class", "y axis")
+        .attr("transform", `translate(${marginScatter.left - 10}, ${marginScatter.top})`)
+        .call(leftAxis);
+      annotations.append("g").attr("class", "y gridlines")
+        .attr("transform", `translate(${marginScatter.left - 10}, ${marginScatter.top})`)
+        .call(leftGridLines);
+      annotations.append("g").attr("class", "x axis")
+        .attr("transform", `translate(${marginScatter.left}, ${mapScatterHeight + marginScatter.top + 10})`)
+        .call(bottomAxis);
+      annotations.append("g").attr("class", "x gridlines")
+        .attr("transform", `translate(${marginScatter.left}, ${mapScatterHeight + marginScatter.top + 10})`)
+        .call(bottomGridLines);
+
+      let circles = mapScatter.selectAll("circle.scatter").data(tracts.features)
+        .join("circle")
+        .attr("class", "scatter")
+        .attr("cx", d => {
+          return incomeScale(d.properties["est household mean income"])
+        }
+        )
+        .attr("cy", d => treeCountScale(d.properties["TreeCount"]))
+        .attr("r", 3)
+        .attr("opacity", 0.6)
+        .attr("fill", "#AAA");
 
     }
     requestData();
@@ -417,10 +413,10 @@
       return [treeCount, meanIncome]
     }
     //legend function from INFO 3300 lecture notes
-    function drawLegend(legendSelector, legendColorScale) {
+    function drawLegend(legendSelector, legendColorScale, stringFormatter) {
 
       const offsets = {
-        width: 10,
+        width: 30,
         top: 2,
         bottom: 24
       };
@@ -456,10 +452,9 @@
         if (legendColorScale.hasOwnProperty('thresholds')) { thresholds = legendColorScale.thresholds() }
         else { thresholds = legendColorScale.quantiles() }
 
-        const barThresholds = [legendMinMax[0], ...thresholds, legendMinMax[1]];
+        let barThresholds = [legendMinMax[0], ...thresholds, legendMinMax[1]];
 
-
-        barAxis.tickValues(barThresholds);
+        barAxis.tickValues(barThresholds).tickFormat(stringFormatter);
 
         for (let i = 0; i < barThresholds.length - 1; i++) {
           let dataStart = barThresholds[i]; let dataEnd = barThresholds[i + 1];
