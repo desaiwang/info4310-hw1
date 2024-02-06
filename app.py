@@ -11,7 +11,7 @@ app.wsgi_app = WhiteNoise(app.wsgi_app, root="static/",
 # string indicates routes that need to be handled, here we just do root dir
 @app.route('/', methods=['GET'])
 def hello():
-    return make_response("Hello, world!!!!")
+    return make_response("please go to /static for hw1.")
 
 
 # have flask start server if calling from terminal
